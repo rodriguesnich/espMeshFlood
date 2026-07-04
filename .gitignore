@@ -1,0 +1,33 @@
+# Build artifacts
+/build/
+/.pio/
+/.pioenvs/
+/.venv/
+__pycache__/
+*.pyc
+
+# Generated code
+/src/espMeshFlood/generated/*.pb.h
+/src/espMeshFlood/generated/*.pb.c
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Test binaries
+test_results
+*.out
+
+# Dependencies
+/lib/
+/include/

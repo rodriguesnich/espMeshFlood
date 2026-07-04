@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package espMeshFlood;
+
+option optimize_for = LITE_RUNTIME;
+
+enum MessageType {
+    USER_MESSAGE = 0;
+    HEARTBEAT = 1;
+}
+
+message MeshMessage {
+    uint64 message_id = 1;
+    uint32 sender_id = 2;
+    uint64 timestamp = 3;
+    MessageType type = 4;
+    uint32 ttl = 5;
+    uint32 relay_count = 6;
+    bytes payload = 7;
+}

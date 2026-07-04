@@ -1,0 +1,35 @@
+Collected 1 tests (test_efmp)
+
+Processing test_efmp in native_test environment
+--------------------------------------------------------------------------------
+Building...
+Removing unused dependencies...
+Library Manager: Installing google/googletest @ ^1.17.0
+Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+Library Manager: googletest@1.17.0 has been installed!
+Warning: nanopb_generator not found. Skipping proto compilation.
+
+
+Testing...
+Processing native_test (platform: native)
+--------------------------------------------------------------------------------
+Removing unused dependencies...
+Library Manager: Removing googletest @ 1.17.0
+Library Manager: googletest@1.17.0 has been removed!
+Verbose mode can be enabled via `-v, --verbose` option
+Warning: nanopb_generator not found. Skipping proto compilation.
+========================= [SUCCESS] Took 0.36 seconds =========================
+
+Environment    Status    Duration
+-------------  --------  ------------
+native_test    SUCCESS   00:00:00.359
+========================= 1 succeeded in 00:00:00.359 =========================
+
+-------------- native_test:test_efmp [ERRORED] Took 0.92 seconds --------------
+
+=================================== SUMMARY ===================================
+Environment    Test       Status    Duration
+-------------  ---------  --------  ------------
+esp32          test_efmp  SKIPPED
+native_test    test_efmp  ERRORED   00:00:00.921
+================== 1 test cases: 0 succeeded in 00:00:00.921 ==================

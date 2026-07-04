@@ -1,0 +1,142 @@
+Start testing: Jul 04 14:05 -03
+----------------------------------------------------------
+1/1 Testing: efmp_all_tests
+1/1 Test: efmp_all_tests
+Command: "/home/rodriguesnich/Nextcloud/nick's/Projects/Code/espMeshFlood/build_tests/test_all"
+Directory: /home/rodriguesnich/Nextcloud/nick's/Projects/Code/espMeshFlood/build_tests
+"efmp_all_tests" start time: Jul 04 14:05 -03
+Output:
+----------------------------------------------------------
+Running main() from ./googletest/src/gtest_main.cc
+[==========] Running 43 tests from 5 test suites.
+[----------] Global test environment set-up.
+[----------] 8 tests from MessageCacheTest
+[ RUN      ] MessageCacheTest.SingleMessageNotInCache
+[       OK ] MessageCacheTest.SingleMessageNotInCache (0 ms)
+[ RUN      ] MessageCacheTest.AddMessageThenExists
+[       OK ] MessageCacheTest.AddMessageThenExists (0 ms)
+[ RUN      ] MessageCacheTest.MultipleMessagesTracked
+[       OK ] MessageCacheTest.MultipleMessagesTracked (0 ms)
+[ RUN      ] MessageCacheTest.DuplicateMessageRejected
+/home/rodriguesnich/Nextcloud/nick's/Projects/Code/espMeshFlood/test/unit/cache_test.cpp:51: Failure
+Expected equality of these values:
+  cache->size()
+    Which is: 2
+  1
+
+[  FAILED  ] MessageCacheTest.DuplicateMessageRejected (1 ms)
+[ RUN      ] MessageCacheTest.ExpiredEntriesRemoved
+[       OK ] MessageCacheTest.ExpiredEntriesRemoved (0 ms)
+[ RUN      ] MessageCacheTest.CacheBoundedSize
+[       OK ] MessageCacheTest.CacheBoundedSize (0 ms)
+[ RUN      ] MessageCacheTest.ClearRemovesAllEntries
+[       OK ] MessageCacheTest.ClearRemovesAllEntries (0 ms)
+[ RUN      ] MessageCacheTest.MixedExpirationAndCapacity
+[       OK ] MessageCacheTest.MixedExpirationAndCapacity (0 ms)
+[----------] 8 tests from MessageCacheTest (1 ms total)
+
+[----------] 13 tests from MessageMetadataTest
+[ RUN      ] MessageMetadataTest.InitialTTL
+[       OK ] MessageMetadataTest.InitialTTL (0 ms)
+[ RUN      ] MessageMetadataTest.InitialRelayCount
+[       OK ] MessageMetadataTest.InitialRelayCount (0 ms)
+[ RUN      ] MessageMetadataTest.CanRetransmitWithTTL
+[       OK ] MessageMetadataTest.CanRetransmitWithTTL (0 ms)
+[ RUN      ] MessageMetadataTest.NotExpiredWithTTL
+[       OK ] MessageMetadataTest.NotExpiredWithTTL (0 ms)
+[ RUN      ] MessageMetadataTest.DecrementTTL
+[       OK ] MessageMetadataTest.DecrementTTL (0 ms)
+[ RUN      ] MessageMetadataTest.IncrementRelayCount
+[       OK ] MessageMetadataTest.IncrementRelayCount (0 ms)
+[ RUN      ] MessageMetadataTest.TTLDecrementToZero
+[       OK ] MessageMetadataTest.TTLDecrementToZero (0 ms)
+[ RUN      ] MessageMetadataTest.TTLZeroBlocksRetransmission
+[       OK ] MessageMetadataTest.TTLZeroBlocksRetransmission (0 ms)
+[ RUN      ] MessageMetadataTest.RelayCountIncrement
+[       OK ] MessageMetadataTest.RelayCountIncrement (0 ms)
+[ RUN      ] MessageMetadataTest.SetTTL
+[       OK ] MessageMetadataTest.SetTTL (0 ms)
+[ RUN      ] MessageMetadataTest.SetRelayCount
+[       OK ] MessageMetadataTest.SetRelayCount (0 ms)
+[ RUN      ] MessageMetadataTest.MultipleDecrements
+[       OK ] MessageMetadataTest.MultipleDecrements (0 ms)
+[ RUN      ] MessageMetadataTest.TTLZeroMinusDecrement
+[       OK ] MessageMetadataTest.TTLZeroMinusDecrement (0 ms)
+[----------] 13 tests from MessageMetadataTest (0 ms total)
+
+[----------] 8 tests from RandomBackoffTest
+[ RUN      ] RandomBackoffTest.DelayInRange
+[       OK ] RandomBackoffTest.DelayInRange (0 ms)
+[ RUN      ] RandomBackoffTest.DelayVariation
+[       OK ] RandomBackoffTest.DelayVariation (0 ms)
+[ RUN      ] RandomBackoffTest.ZeroRangeReturnsMin
+[       OK ] RandomBackoffTest.ZeroRangeReturnsMin (0 ms)
+[ RUN      ] RandomBackoffTest.SeededDeterminism
+[       OK ] RandomBackoffTest.SeededDeterminism (0 ms)
+[ RUN      ] RandomBackoffTest.DifferentSeedsDifferentSequence
+[       OK ] RandomBackoffTest.DifferentSeedsDifferentSequence (0 ms)
+[ RUN      ] RandomBackoffTest.SetSeedAffectsSequence
+[       OK ] RandomBackoffTest.SetSeedAffectsSequence (0 ms)
+[ RUN      ] RandomBackoffTest.SmallRange
+[       OK ] RandomBackoffTest.SmallRange (0 ms)
+[ RUN      ] RandomBackoffTest.LargeRange
+[       OK ] RandomBackoffTest.LargeRange (0 ms)
+[----------] 8 tests from RandomBackoffTest (0 ms total)
+
+[----------] 8 tests from SerializationTest
+[ RUN      ] SerializationTest.SerializeDeserializeBasicMessage
+[       OK ] SerializationTest.SerializeDeserializeBasicMessage (0 ms)
+[ RUN      ] SerializationTest.EmptyPayload
+[       OK ] SerializationTest.EmptyPayload (0 ms)
+[ RUN      ] SerializationTest.LargePayload
+[       OK ] SerializationTest.LargePayload (0 ms)
+[ RUN      ] SerializationTest.ZeroValues
+[       OK ] SerializationTest.ZeroValues (0 ms)
+[ RUN      ] SerializationTest.MaxValues
+[       OK ] SerializationTest.MaxValues (0 ms)
+[ RUN      ] SerializationTest.BufferTooSmall
+[       OK ] SerializationTest.BufferTooSmall (0 ms)
+[ RUN      ] SerializationTest.MalformedInput
+[       OK ] SerializationTest.MalformedInput (0 ms)
+[ RUN      ] SerializationTest.MultipleRoundTrips
+[       OK ] SerializationTest.MultipleRoundTrips (0 ms)
+[----------] 8 tests from SerializationTest (0 ms total)
+
+[----------] 6 tests from MeshProtocolIntegrationTest
+[ RUN      ] MeshProtocolIntegrationTest.DirectDelivery
+[       OK ] MeshProtocolIntegrationTest.DirectDelivery (0 ms)
+[ RUN      ] MeshProtocolIntegrationTest.OneHopRelay
+[       OK ] MeshProtocolIntegrationTest.OneHopRelay (280 ms)
+[ RUN      ] MeshProtocolIntegrationTest.MultiHopPropagation
+[       OK ] MeshProtocolIntegrationTest.MultiHopPropagation (316 ms)
+[ RUN      ] MeshProtocolIntegrationTest.DeduplicationInProtocol
+[       OK ] MeshProtocolIntegrationTest.DeduplicationInProtocol (243 ms)
+[ RUN      ] MeshProtocolIntegrationTest.TTLLimit
+/home/rodriguesnich/Nextcloud/nick's/Projects/Code/espMeshFlood/test/integration/message_flow_test.cpp:258: Failure
+Expected equality of these values:
+  transports[4]->get_sent_message_count()
+    Which is: 1
+  0
+
+[  FAILED  ] MeshProtocolIntegrationTest.TTLLimit (361 ms)
+[ RUN      ] MeshProtocolIntegrationTest.RedundantPathsDeduplication
+[       OK ] MeshProtocolIntegrationTest.RedundantPathsDeduplication (545 ms)
+[----------] 6 tests from MeshProtocolIntegrationTest (1746 ms total)
+
+[----------] Global test environment tear-down
+[==========] 43 tests from 5 test suites ran. (1748 ms total)
+[  PASSED  ] 41 tests.
+[  FAILED  ] 2 tests, listed below:
+[  FAILED  ] MessageCacheTest.DuplicateMessageRejected
+[  FAILED  ] MeshProtocolIntegrationTest.TTLLimit
+
+ 2 FAILED TESTS
+<end of output>
+Test time =   1.75 sec
+----------------------------------------------------------
+Test Failed.
+"efmp_all_tests" end time: Jul 04 14:05 -03
+"efmp_all_tests" time elapsed: 00:00:01
+----------------------------------------------------------
+
+End testing: Jul 04 14:05 -03
