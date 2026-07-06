@@ -81,7 +81,7 @@ Message processing order: Deserialize → Dedup check → Register cache → Del
 
 ```protobuf
 message MeshMessage {
-    uint64 message_id = 1;      // Unique identifier (sender_id || counter)
+   uint32 message_id = 1;      // Unique identifier (local sender counter)
     uint32 sender_id = 2;       // Originator node ID (MAC-derived)
     uint64 timestamp = 3;       // Creation time (milliseconds)
     MessageType type = 4;       // USER_MESSAGE=0, HEARTBEAT=1
@@ -99,7 +99,7 @@ enum MessageType {
 
 | Field | Type | Size | Description |
 |-------|------|------|-------------|
-| message_id | uint64 | 8 | Unique per sender; format: `(sender_id << 32) \| counter` |
+| message_id | uint32 | 4 | Unique per sender process; generated from local counter |
 | sender_id | uint32 | 4 | MAC address last 4 bytes as uint32 |
 | timestamp | uint64 | 8 | ms since node boot or epoch |
 | type | enum | 1 | 0=user data, 1=heartbeat |
@@ -193,7 +193,7 @@ enum MessageType {
 
 ```cpp
 struct CacheEntry {
-    uint64 message_id;
+   uint32 message_id;
     uint64 timestamp_ms;  // when added
 };
 
@@ -488,7 +488,7 @@ A -   - D
 
 | Component | Size |
 |-----------|------|
-| message_id | 8 bytes (varint encoded) |
+| message_id | up to 5 bytes (varint encoded) |
 | sender_id | 4 bytes |
 | timestamp | 8 bytes |
 | type | 1 byte |

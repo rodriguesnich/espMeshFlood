@@ -13,8 +13,8 @@ namespace espMeshFlood {
 
 MeshProtocol::MeshProtocol(std::shared_ptr<EspNowTransport> transport, ApplicationCallback app_callback)
     : transport_(transport), app_callback_(app_callback), 
-      cache_(std::make_unique<MessageCache>(Config::CACHE_SIZE, Config::CACHE_ENTRY_EXPIRATION_MS)),
-      backoff_(std::make_unique<RandomBackoff>(Config::MIN_RELAY_DELAY_MS, Config::MAX_RELAY_DELAY_MS)),
+    cache_(std::unique_ptr<MessageCache>(new MessageCache(Config::CACHE_SIZE, Config::CACHE_ENTRY_EXPIRATION_MS))),
+    backoff_(std::unique_ptr<RandomBackoff>(new RandomBackoff(Config::MIN_RELAY_DELAY_MS, Config::MAX_RELAY_DELAY_MS))),
       current_time_ms_(0), message_counter_(0) {
 }
 
@@ -64,7 +64,7 @@ bool MeshProtocol::send_message(const uint8_t* payload, size_t payload_size, uin
     std::memcpy(message.payload.data(), payload, payload_size);
 
     // Register in cache immediately
-    cache_->add(message.message_id, current_time_ms_);
+    cache_->add(message.sender_id, message.message_id, current_time_ms_);
 
     // Serialize and send
     uint8_t buffer[MessageSerializer::max_size()];
@@ -91,12 +91,12 @@ void MeshProtocol::on_message_received(const uint8_t* data, size_t length, int32
     }
 
     // Check if already processed (deduplication)
-    if (cache_->exists(message.message_id, current_time_ms_)) {
+    if (cache_->exists(message.sender_id, message.message_id, current_time_ms_)) {
         return;  // Already seen, discard
     }
 
     // Register in cache immediately
-    cache_->add(message.message_id, current_time_ms_);
+    cache_->add(message.sender_id, message.message_id, current_time_ms_);
 
     // Deliver to application if callback is registered
     if (app_callback_) {
@@ -125,10 +125,9 @@ void MeshProtocol::do_maintenance() {
     cache_->cleanup_expired(current_time_ms_);
 }
 
-uint64_t MeshProtocol::generate_message_id() {
-    // Simple message ID: combine sender_id with counter
-    uint32_t sender_id = transport_->get_node_id();
-    return ((uint64_t)sender_id << 32) | (message_counter_++);
+uint32_t MeshProtocol::generate_message_id() {
+    // Message ID is now a 32-bit local counter.
+    return message_counter_++;
 }
 
 void MeshProtocol::schedule_retransmit(const MeshMessage& message) {

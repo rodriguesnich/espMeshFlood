@@ -43,32 +43,33 @@ if not nanopb_bin or not os.path.exists(nanopb_bin):
         nanopb_bin = nanopb_generator.__file__
     except:
         print("Warning: nanopb_generator not found. Skipping proto compilation.")
-        sys.exit(0)
+        nanopb_bin = None
 
 # Generate C files for all .proto files
-if not os.path.isdir(proto_dir):
+if not nanopb_bin:
+    pass
+elif not os.path.isdir(proto_dir):
     print(f"Warning: proto directory not found: {proto_dir}")
-    sys.exit(0)
+else:
+    proto_files = [f for f in os.listdir(proto_dir) if f.endswith(".proto")]
 
-proto_files = [f for f in os.listdir(proto_dir) if f.endswith(".proto")]
+    for proto_file in proto_files:
+        proto_path = os.path.join(proto_dir, proto_file)
+        output_prefix = os.path.join(generated_dir, proto_file[:-6])  # Remove .proto extension
+        
+        print(f"Generating {proto_file}...")
+        try:
+            # Run nanopb generator
+            result = subprocess.run(
+                [sys.executable, nanopb_bin, "-D", generated_dir, proto_path],
+                check=False,
+                capture_output=True,
+                text=True
+            )
+            if result.returncode != 0:
+                print(f"Warning: Proto generation for {proto_file} had issues:")
+                print(result.stderr)
+        except Exception as e:
+            print(f"Warning: Could not generate {proto_file}: {e}")
 
-for proto_file in proto_files:
-    proto_path = os.path.join(proto_dir, proto_file)
-    output_prefix = os.path.join(generated_dir, proto_file[:-6])  # Remove .proto extension
-    
-    print(f"Generating {proto_file}...")
-    try:
-        # Run nanopb generator
-        result = subprocess.run(
-            [sys.executable, nanopb_bin, "-D", generated_dir, proto_path],
-            check=False,
-            capture_output=True,
-            text=True
-        )
-        if result.returncode != 0:
-            print(f"Warning: Proto generation for {proto_file} had issues:")
-            print(result.stderr)
-    except Exception as e:
-        print(f"Warning: Could not generate {proto_file}: {e}")
-
-print("Proto compilation complete.")
+    print("Proto compilation complete.")

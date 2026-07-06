@@ -81,9 +81,13 @@ size_t MessageSerializer::serialize(const MeshMessage& message, uint8_t* buffer,
     write_field_key(buffer, remaining, 5, 0);
     write_varint(buffer, remaining, message.ttl);
 
-    // Field 6: payload (length-delimited)
+    // Field 6: relay_count (varint)
+    write_field_key(buffer, remaining, 6, 0);
+    write_varint(buffer, remaining, message.relay_count);
+
+    // Field 7: payload (length-delimited)
     if (!message.payload.empty()) {
-        write_field_key(buffer, remaining, 6, 2);
+        write_field_key(buffer, remaining, 7, 2);
         write_varint(buffer, remaining, message.payload.size());
         if (remaining < message.payload.size()) {
             return 0;  // Error: buffer too small
@@ -117,7 +121,7 @@ bool MessageSerializer::deserialize(const uint8_t* buffer, size_t buffer_size, M
             case 1:  // message_id
                 if (wire_type == 0) {
                     if (!read_varint(buffer, remaining, varint_value)) return false;
-                    message.message_id = varint_value;
+                    message.message_id = static_cast<uint32_t>(varint_value);
                 }
                 break;
             case 2:  // sender_id
@@ -144,7 +148,13 @@ bool MessageSerializer::deserialize(const uint8_t* buffer, size_t buffer_size, M
                     message.ttl = (uint32_t)varint_value;
                 }
                 break;
-            case 6:  // payload (length-delimited)
+            case 6:  // relay_count
+                if (wire_type == 0) {
+                    if (!read_varint(buffer, remaining, varint_value)) return false;
+                    message.relay_count = (uint32_t)varint_value;
+                }
+                break;
+            case 7:  // payload (length-delimited)
                 if (wire_type == 2) {
                     uint64_t length;
                     if (!read_varint(buffer, remaining, length)) return false;

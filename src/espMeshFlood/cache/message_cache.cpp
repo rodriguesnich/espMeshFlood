@@ -8,23 +8,23 @@ MessageCache::MessageCache(size_t max_size, uint64_t expiration_ms)
     entries_.reserve(max_size);
 }
 
-bool MessageCache::exists(uint64_t message_id) const {
+bool MessageCache::exists(uint32_t sender_id, uint32_t message_id) const {
     for (const auto& entry : entries_) {
-        if (entry.message_id == message_id) {
+        if (entry.sender_id == sender_id && entry.message_id == message_id) {
             return true;
         }
     }
     return false;
 }
 
-bool MessageCache::exists(uint64_t message_id, uint64_t current_time_ms) {
+bool MessageCache::exists(uint32_t sender_id, uint32_t message_id, uint64_t current_time_ms) {
     cleanup_expired(current_time_ms);
-    return exists(message_id);
+    return exists(sender_id, message_id);
 }
 
-void MessageCache::add(uint64_t message_id, uint64_t current_time_ms) {
+void MessageCache::add(uint32_t sender_id, uint32_t message_id, uint64_t current_time_ms) {
     // Check if message already exists to avoid duplicates
-    if (exists(message_id, current_time_ms)) {
+    if (exists(sender_id, message_id, current_time_ms)) {
         return;
     }
 
@@ -38,6 +38,7 @@ void MessageCache::add(uint64_t message_id, uint64_t current_time_ms) {
 
     // Add new entry
     CacheEntry entry;
+    entry.sender_id = sender_id;
     entry.message_id = message_id;
     entry.timestamp_ms = current_time_ms;
     entries_.push_back(entry);

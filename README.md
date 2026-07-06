@@ -154,7 +154,7 @@ public:
 
 ```protobuf
 message MeshMessage {
-    uint64 message_id = 1;    // Unique message identifier
+    uint32 message_id = 1;    // Unique message identifier
     uint32 sender_id = 2;     // Source node ID
     uint64 timestamp = 3;     // Creation timestamp (ms)
     MessageType type = 4;     // USER_MESSAGE or HEARTBEAT
@@ -245,8 +245,8 @@ Deduplication cache for tracking seen messages.
 ```cpp
 MessageCache(size_t max_size, uint64_t expiration_ms);
 
-bool exists(uint64_t message_id);
-void add(uint64_t message_id, uint64_t current_time_ms);
+bool exists(uint32_t sender_id, uint32_t message_id);
+void add(uint32_t sender_id, uint32_t message_id, uint64_t current_time_ms);
 void cleanup_expired(uint64_t current_time_ms);
 size_t size() const;
 void clear();

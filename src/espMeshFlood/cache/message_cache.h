@@ -11,7 +11,8 @@ namespace espMeshFlood {
  * @brief Cache entry for deduplication
  */
 struct CacheEntry {
-    uint64_t message_id;
+    uint32_t sender_id;
+    uint32_t message_id;
     uint64_t timestamp_ms;  // milliseconds when added
 };
 
@@ -31,26 +32,29 @@ public:
     explicit MessageCache(size_t max_size, uint64_t expiration_ms);
 
     /**
-     * @brief Check if a message ID exists in cache
+    * @brief Check if a sender/message pair exists in cache
+    * @param sender_id The sender ID associated with the message
      * @param message_id The message ID to check
-     * @return true if the message_id is in cache, false otherwise
+    * @return true if the sender/message pair is in cache, false otherwise
      */
-    bool exists(uint64_t message_id) const;
+    bool exists(uint32_t sender_id, uint32_t message_id) const;
 
     /**
-     * @brief Check if a message ID exists in cache after cleaning expired entries
+    * @brief Check if a sender/message pair exists in cache after cleaning expired entries
+    * @param sender_id The sender ID associated with the message
      * @param message_id The message ID to check
      * @param current_time_ms Current system time in milliseconds
-     * @return true if the message_id is in cache and not expired, false otherwise
+    * @return true if the sender/message pair is in cache and not expired, false otherwise
      */
-    bool exists(uint64_t message_id, uint64_t current_time_ms);
+    bool exists(uint32_t sender_id, uint32_t message_id, uint64_t current_time_ms);
 
     /**
-     * @brief Add a message ID to the cache
+    * @brief Add a sender/message pair to the cache
+    * @param sender_id The sender ID associated with the message
      * @param message_id The message ID to add
      * @param current_time_ms Current system time in milliseconds
      */
-    void add(uint64_t message_id, uint64_t current_time_ms);
+    void add(uint32_t sender_id, uint32_t message_id, uint64_t current_time_ms);
 
     /**
      * @brief Remove expired entries from the cache

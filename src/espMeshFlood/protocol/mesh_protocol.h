@@ -96,7 +96,7 @@ private:
      * @brief Generate unique message ID
      * @return New message ID
      */
-    uint64_t generate_message_id();
+    uint32_t generate_message_id();
 
     /**
      * @brief Schedule retransmission of a message

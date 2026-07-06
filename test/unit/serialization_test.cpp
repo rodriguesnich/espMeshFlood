@@ -12,7 +12,7 @@ protected:
 // CT-10: Serialization Protobuf
 TEST_F(SerializationTest, SerializeDeserializeBasicMessage) {
     MeshMessage original;
-    original.message_id = 0x1234567890ABCDEF;
+    original.message_id = 0x90ABCDEF;
     original.sender_id = 0x11111111;
     original.timestamp = 0x0000000112345678;
     original.type = MessageType::USER_MESSAGE;
@@ -109,7 +109,7 @@ TEST_F(SerializationTest, ZeroValues) {
 
 TEST_F(SerializationTest, MaxValues) {
     MeshMessage original;
-    original.message_id = 0xFFFFFFFFFFFFFFFF;
+    original.message_id = 0xFFFFFFFF;
     original.sender_id = 0xFFFFFFFF;
     original.timestamp = 0xFFFFFFFFFFFFFFFF;
     original.type = MessageType::HEARTBEAT;
@@ -151,7 +151,7 @@ TEST_F(SerializationTest, MalformedInput) {
 
 TEST_F(SerializationTest, MultipleRoundTrips) {
     MeshMessage original;
-    original.message_id = 0x1234567890ABCDEF;
+    original.message_id = 0x90ABCDEF;
     original.sender_id = 0xDEADBEEF;
     original.timestamp = 0x0123456789ABCDEF;
     original.type = MessageType::USER_MESSAGE;

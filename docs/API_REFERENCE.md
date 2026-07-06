@@ -285,24 +285,26 @@ MessageCache(size_t max_size, uint64_t expiration_ms);
 
 ### Public Methods
 
-#### `bool exists(uint64_t message_id) const`
+#### `bool exists(uint32_t sender_id, uint32_t message_id) const`
 
-Check if message ID is in cache (without expiration check).
+Check if a sender/message pair is in cache (without expiration check).
 
 **Parameters**:
+- `sender_id`: Sender ID associated with the message
 - `message_id`: Message ID to look for
 
 **Returns**: `true` if found, `false` otherwise
 
-**Note**: Does not perform cleanup. Use `exists(message_id, current_time)` for production.
+**Note**: Does not perform cleanup. Use `exists(sender_id, message_id, current_time)` for production.
 
 ---
 
-#### `bool exists(uint64_t message_id, uint64_t current_time_ms)`
+#### `bool exists(uint32_t sender_id, uint32_t message_id, uint64_t current_time_ms)`
 
-Check if message ID is in cache (with expiration check).
+Check if a sender/message pair is in cache (with expiration check).
 
 **Parameters**:
+- `sender_id`: Sender ID associated with the message
 - `message_id`: Message ID to look for
 - `current_time_ms`: Current time for expiration calculation
 
@@ -312,11 +314,12 @@ Check if message ID is in cache (with expiration check).
 
 ---
 
-#### `void add(uint64_t message_id, uint64_t current_time_ms)`
+#### `void add(uint32_t sender_id, uint32_t message_id, uint64_t current_time_ms)`
 
-Add a message ID to the cache.
+Add a sender/message pair to the cache.
 
 **Parameters**:
+- `sender_id`: Sender ID associated with the message
 - `message_id`: Message ID to add
 - `current_time_ms`: Current time for expiration tracking
 
@@ -554,7 +557,7 @@ Core message structure.
 
 ```cpp
 struct MeshMessage {
-    uint64_t message_id;           // Unique message identifier
+    uint32_t message_id;           // Unique message identifier
     uint32_t sender_id;            // Originating node ID
     uint64_t timestamp;            // Creation time (ms)
     MessageType type;              // USER_MESSAGE or HEARTBEAT
@@ -569,7 +572,7 @@ struct MeshMessage {
 
 | Field | Type | Default | Range | Notes |
 |-------|------|---------|-------|-------|
-| message_id | uint64 | 0 | 0-max | Auto-generated on send |
+| message_id | uint32 | 0 | 0-max | Auto-generated on send |
 | sender_id | uint32 | 0 | 0-max | Set by originator |
 | timestamp | uint64 | 0 | 0-max | Creation time in ms |
 | type | enum | USER_MESSAGE | 0-1 | 0=data, 1=heartbeat |
