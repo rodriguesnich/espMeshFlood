@@ -2,6 +2,7 @@
 #include <espMeshFlood/efmp.h>
 #include <espMeshFlood/types.h>
 #include <espMeshFlood/serialization/message_serializer.h>
+#include <espMeshFlood/transport/esp_now_transport_impl.h>
 #include <esp_now.h>
 #include <cstring>
 
@@ -14,14 +15,15 @@ const size_t LENGTH_SIZE = 2;     // 16-bit length field
 const size_t FRAME_HEADER_SIZE = MAGIC_SIZE + LENGTH_SIZE;
 
 // Global timing
-unsigned long last_send_time = 0;
-const unsigned long SEND_INTERVAL_MS = 5000;  // Send every 5 seconds
+unsigned long last_heartbeat_time = 0;
+const unsigned long HEARTBEAT_INTERVAL_MS = 30000;  // Send heartbeat every 30 seconds
 unsigned long last_maintenance_time = 0;
 const unsigned long MAINTENANCE_INTERVAL_MS = 1000;  // Maintenance every 1 second
 
 // Statistics
 uint32_t messages_sent = 0;
 uint32_t messages_received = 0;
+uint32_t heartbeat_count = 0;
 
 /**
  * @brief Send a framed serial message
@@ -40,58 +42,6 @@ void sendSerialMessage(const uint8_t* payload, uint16_t payload_size) {
     
     // Ensure all data is sent
     Serial.flush();
-}
-
-/**
- * @brief Receive a framed serial message
- * @param buffer Buffer to store the received payload
- * @param buffer_size Maximum size of the buffer
- * @return Size of received payload, or 0 if no valid frame received
- */
-size_t receiveSerialMessage(uint8_t* buffer, size_t buffer_size) {
-    if (Serial.available() < FRAME_HEADER_SIZE) {
-        return 0;  // Not enough data for header
-    }
-    
-    // Check magic byte
-    uint8_t magic = Serial.peek();
-    if (magic != MAGIC_BYTE) {
-        // Not a valid frame, consume the byte and return
-        Serial.read();
-        return 0;
-    }
-    
-    // Read magic byte
-    Serial.read();  // Consume magic byte
-    
-    // Read length
-    uint16_t payload_size = 0;
-    size_t bytes_read = Serial.readBytes((uint8_t*)&payload_size, LENGTH_SIZE);
-    if (bytes_read != LENGTH_SIZE) {
-        return 0;  // Failed to read length
-    }
-    
-    // Validate payload size
-    if (payload_size == 0 || payload_size > buffer_size) {
-        return 0;  // Invalid payload size
-    }
-    
-    // Wait for payload data with timeout
-    unsigned long timeout = millis() + 100;  // 100ms timeout
-    while (Serial.available() < payload_size) {
-        if (millis() > timeout) {
-            return 0;  // Timeout waiting for data
-        }
-        delay(1);
-    }
-    
-    // Read payload
-    bytes_read = Serial.readBytes(buffer, payload_size);
-    if (bytes_read != payload_size) {
-        return 0;  // Failed to read complete payload
-    }
-    
-    return payload_size;
 }
 
 /**
@@ -155,12 +105,14 @@ void processIncomingSerialData() {
                     // Complete frame received
                     MeshMessage msg;
                     if (parseSerialMessage(rx_buffer, expected_length, msg)) {
-                        // Send to mesh network
+                        // Forward the received message to the mesh network
                         uint8_t serialized[MessageSerializer::max_size()];
                         size_t serialized_size = MessageSerializer::serialize(msg, serialized, sizeof(serialized));
                         
                         if (serialized_size > 0) {
                             EspMeshFlood::instance().send_message(serialized, serialized_size, msg.ttl);
+                            messages_sent++;
+                            // DON'T forward to serial here - it will come back via mesh callback
                         }
                     }
                     
@@ -173,21 +125,51 @@ void processIncomingSerialData() {
     }
 }
 
-static MeshMessage create_demo_message(uint32_t counter) {
+/**
+ * @brief Create and send a heartbeat message
+ * @return true if heartbeat was sent successfully
+ */
+bool sendHeartbeat() {
     MeshMessage msg;
-    msg.message_id = counter;
+    msg.message_id = heartbeat_count + 1;
     msg.sender_id = EspMeshFlood::instance().get_node_id();
     msg.timestamp = millis();
-    msg.type = MessageType::USER_MESSAGE;
-    msg.ttl = 5;
+    msg.type = MessageType::HEARTBEAT;
+    msg.ttl = 3;  // Lower TTL for heartbeats to reduce mesh flooding
     msg.relay_count = 0;
-
-    const char* text = "Hello from ESP32";
-    size_t payload_size = std::strlen(text);
+    
+    // Optional: Include node info in payload
+    char heartbeat_payload[32];
+    snprintf(heartbeat_payload, sizeof(heartbeat_payload), "HB:%lu", millis() / 1000);
+    size_t payload_size = std::strlen(heartbeat_payload);
     msg.payload.resize(payload_size);
-    std::memcpy(msg.payload.data(), text, payload_size);
-
-    return msg;
+    std::memcpy(msg.payload.data(), heartbeat_payload, payload_size);
+    
+    // Serialize the heartbeat message
+    uint8_t serialized[MessageSerializer::max_size()];
+    size_t serialized_size = MessageSerializer::serialize(msg, serialized, sizeof(serialized));
+    
+    if (serialized_size == 0) {
+        return false;
+    }
+    
+    // Send to mesh network
+    bool sent = EspMeshFlood::instance().send_message(serialized, serialized_size, msg.ttl);
+    
+    if (sent) {
+        heartbeat_count++;
+        messages_sent++;
+        
+        // Output to serial for monitoring - this is the ONLY place heartbeat is sent to serial
+        sendSerialMessage(serialized, serialized_size);
+        
+        // Debug output (optional)
+        // Serial.print("Heartbeat #");
+        // Serial.print(heartbeat_count);
+        // Serial.println(" sent");
+    }
+    
+    return sent;
 }
 
 /**
@@ -196,6 +178,12 @@ static MeshMessage create_demo_message(uint32_t counter) {
  */
 void on_mesh_message_received(const MeshMessage& msg, int32_t rssi) {
     messages_received++;
+    
+    // Don't forward our own heartbeats back to serial
+    // (they're already sent in sendHeartbeat)
+    if (msg.type == MessageType::HEARTBEAT && msg.sender_id == EspMeshFlood::instance().get_node_id()) {
+        return;  // Skip our own heartbeats coming back from mesh
+    }
 
     uint8_t serialized[MessageSerializer::max_size()];
     size_t serialized_size = MessageSerializer::serialize(msg, serialized, sizeof(serialized));
@@ -210,35 +198,40 @@ void on_mesh_message_received(const MeshMessage& msg, int32_t rssi) {
 void setup() {
     Serial.begin(115200);
     delay(1000);
+    
+    Serial.println("ESP32 Mesh Node starting...");
+    Serial.print("Heartbeat interval: ");
+    Serial.print(HEARTBEAT_INTERVAL_MS / 1000);
+    Serial.println(" seconds");
 
-    if (!EspMeshFlood::instance().init(on_mesh_message_received)) {
+    // Create and initialize the ESP-NOW transport layer
+    auto transport = std::make_shared<espMeshFlood::EspNowTransportImpl>();
+    
+    if (!EspMeshFlood::instance().init(on_mesh_message_received, transport)) {
+        Serial.println("Failed to initialize mesh!");
         while (1) {
             delay(1000);
         }
     }
+    
+    Serial.println("Mesh initialized successfully");
+    Serial.print("Node ID: ");
+    Serial.println(EspMeshFlood::instance().get_node_id());
 }
 
 /**
- * @brief Main loop - send periodic messages and maintain the mesh
+ * @brief Main loop - process serial data, send heartbeats, and maintain the mesh
  */
 void loop() {
     unsigned long now = millis();
     
-    // Process incoming serial data
+    // Process incoming serial data (highest priority)
     processIncomingSerialData();
     
-    // Periodic message sending
-    if (now - last_send_time >= SEND_INTERVAL_MS) {
-        last_send_time = now;
-        messages_sent++;
-
-        MeshMessage msg = create_demo_message(messages_sent);
-        uint8_t serialized[MessageSerializer::max_size()];
-        size_t serialized_size = MessageSerializer::serialize(msg, serialized, sizeof(serialized));
-
-        if (serialized_size > 0 && EspMeshFlood::instance().send_message(serialized, serialized_size, 5)) {
-            sendSerialMessage(serialized, serialized_size);
-        }
+    // Send heartbeat at regular intervals
+    if (now - last_heartbeat_time >= HEARTBEAT_INTERVAL_MS) {
+        last_heartbeat_time = now;
+        sendHeartbeat();
     }
     
     // Periodic maintenance

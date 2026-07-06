@@ -20,6 +20,7 @@ file(GLOB EFMP_SOURCES
     "${CMAKE_SOURCE_DIR}/src/espMeshFlood/backoff/*.cpp"
     "${CMAKE_SOURCE_DIR}/src/espMeshFlood/protocol/*.cpp"
     "${CMAKE_SOURCE_DIR}/src/espMeshFlood/serialization/*.cpp"
+    "${CMAKE_SOURCE_DIR}/src/espMeshFlood/transport/*.cpp"
     "${CMAKE_SOURCE_DIR}/src/espMeshFlood/*.cpp"
 )
 
