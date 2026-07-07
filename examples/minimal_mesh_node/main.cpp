@@ -3,245 +3,114 @@
 #include <espMeshFlood/types.h>
 #include <espMeshFlood/serialization/message_serializer.h>
 #include <espMeshFlood/transport/esp_now_transport_impl.h>
-#include <esp_now.h>
+#include <espMeshFlood/host/serial_host_transport.h>
 #include <cstring>
 
 using namespace espMeshFlood;
 
-// Frame constants
-const uint8_t MAGIC_BYTE = 0xAA;  // Magic byte for frame synchronization
-const size_t MAGIC_SIZE = 1;
-const size_t LENGTH_SIZE = 2;     // 16-bit length field
-const size_t FRAME_HEADER_SIZE = MAGIC_SIZE + LENGTH_SIZE;
+// Host transport — wraps Serial with the unified EFMP framing protocol.
+// The template parameter makes this testable with MockStream without Arduino headers.
+SerialHostTransport<HardwareSerial> host_transport(Serial, 115200);
 
 // Global timing
 unsigned long last_heartbeat_time = 0;
-const unsigned long HEARTBEAT_INTERVAL_MS = 30000;  // Send heartbeat every 30 seconds
+const unsigned long HEARTBEAT_INTERVAL_MS = 30000;
 unsigned long last_maintenance_time = 0;
-const unsigned long MAINTENANCE_INTERVAL_MS = 1000;  // Maintenance every 1 second
+const unsigned long MAINTENANCE_INTERVAL_MS = 1000;
 
 // Statistics
 uint32_t messages_sent = 0;
 uint32_t messages_received = 0;
 uint32_t heartbeat_count = 0;
 
-/**
- * @brief Send a framed serial message
- * @param payload Protobuf serialized data
- * @param payload_size Size of the payload
- */
-void sendSerialMessage(const uint8_t* payload, uint16_t payload_size) {
-    // Write magic byte
-    Serial.write(MAGIC_BYTE);
-    
-    // Write length (2 bytes, little-endian)
-    Serial.write((uint8_t*)&payload_size, LENGTH_SIZE);
-    
-    // Write protobuf payload
-    Serial.write(payload, payload_size);
-    
-    // Ensure all data is sent
-    Serial.flush();
-}
-
-/**
- * @brief Parse a serial message and create a MeshMessage
- * @param buffer Raw serial data buffer
- * @param buffer_size Size of data in buffer
- * @param msg Output MeshMessage
- * @return true if parsing successful
- */
-bool parseSerialMessage(const uint8_t* buffer, size_t buffer_size, MeshMessage& msg) {
-    if (buffer_size == 0 || buffer == nullptr) {
-        return false;
-    }
-    
-    // Deserialize protobuf to MeshMessage
-    size_t deserialized = MessageSerializer::deserialize(buffer, buffer_size, msg);
-    return deserialized > 0;
-}
-
-/**
- * @brief Process received serial data and dispatch to mesh network
- */
-void processIncomingSerialData() {
-    static uint8_t rx_buffer[MessageSerializer::max_size()];
-    static size_t rx_buffer_pos = 0;
-    static enum { WAIT_MAGIC, WAIT_LENGTH, WAIT_PAYLOAD } state = WAIT_MAGIC;
-    static uint16_t expected_length = 0;
-    
-    while (Serial.available()) {
-        uint8_t byte = Serial.read();
-        
-        switch (state) {
-            case WAIT_MAGIC:
-                if (byte == MAGIC_BYTE) {
-                    state = WAIT_LENGTH;
-                    rx_buffer_pos = 0;
-                }
-                break;
-                
-            case WAIT_LENGTH:
-                if (rx_buffer_pos < LENGTH_SIZE) {
-                    ((uint8_t*)&expected_length)[rx_buffer_pos] = byte;
-                    rx_buffer_pos++;
-                    
-                    if (rx_buffer_pos >= LENGTH_SIZE) {
-                        if (expected_length > 0 && expected_length <= sizeof(rx_buffer)) {
-                            state = WAIT_PAYLOAD;
-                            rx_buffer_pos = 0;
-                        } else {
-                            // Invalid length, reset
-                            state = WAIT_MAGIC;
-                        }
-                    }
-                }
-                break;
-                
-            case WAIT_PAYLOAD:
-                rx_buffer[rx_buffer_pos++] = byte;
-                
-                if (rx_buffer_pos >= expected_length) {
-                    // Complete frame received
-                    MeshMessage msg;
-                    if (parseSerialMessage(rx_buffer, expected_length, msg)) {
-                        // Forward the received message to the mesh network
-                        uint8_t serialized[MessageSerializer::max_size()];
-                        size_t serialized_size = MessageSerializer::serialize(msg, serialized, sizeof(serialized));
-                        
-                        if (serialized_size > 0) {
-                            EspMeshFlood::instance().send_message(serialized, serialized_size, msg.ttl);
-                            messages_sent++;
-                            // DON'T forward to serial here - it will come back via mesh callback
-                        }
-                    }
-                    
-                    // Reset for next frame
-                    state = WAIT_MAGIC;
-                    rx_buffer_pos = 0;
-                }
-                break;
-        }
-    }
-}
-
-/**
- * @brief Create and send a heartbeat message
- * @return true if heartbeat was sent successfully
- */
 bool sendHeartbeat() {
     MeshMessage msg;
     msg.message_id = heartbeat_count + 1;
-    msg.sender_id = EspMeshFlood::instance().get_node_id();
-    msg.timestamp = millis();
-    msg.type = MessageType::HEARTBEAT;
-    msg.ttl = 3;  // Lower TTL for heartbeats to reduce mesh flooding
+    msg.sender_id  = EspMeshFlood::instance().get_node_id();
+    msg.timestamp  = millis();
+    msg.type       = MessageType::HEARTBEAT;
+    msg.ttl        = 3;
     msg.relay_count = 0;
-    
-    // Optional: Include node info in payload
+
     char heartbeat_payload[32];
     snprintf(heartbeat_payload, sizeof(heartbeat_payload), "HB:%lu", millis() / 1000);
-    size_t payload_size = std::strlen(heartbeat_payload);
+    const size_t payload_size = std::strlen(heartbeat_payload);
     msg.payload.resize(payload_size);
     std::memcpy(msg.payload.data(), heartbeat_payload, payload_size);
-    
-    // Serialize the heartbeat message
+
     uint8_t serialized[MessageSerializer::max_size()];
-    size_t serialized_size = MessageSerializer::serialize(msg, serialized, sizeof(serialized));
-    
-    if (serialized_size == 0) {
-        return false;
-    }
-    
-    // Send to mesh network
-    bool sent = EspMeshFlood::instance().send_message(serialized, serialized_size, msg.ttl);
-    
+    const size_t serialized_size = MessageSerializer::serialize(msg, serialized, sizeof(serialized));
+    if (serialized_size == 0) return false;
+
+    const bool sent = EspMeshFlood::instance().send_message(serialized, serialized_size, msg.ttl);
     if (sent) {
         heartbeat_count++;
         messages_sent++;
-        
-        // Output to serial for monitoring - this is the ONLY place heartbeat is sent to serial
-        sendSerialMessage(serialized, serialized_size);
-        
-        // Debug output (optional)
-        // Serial.print("Heartbeat #");
-        // Serial.print(heartbeat_count);
-        // Serial.println(" sent");
+        host_transport.send(serialized, serialized_size);
     }
-    
     return sent;
 }
 
-/**
- * @brief Callback when a message is received from mesh network.
- * Forwards to serial with proper framing
- */
-void on_mesh_message_received(const MeshMessage& msg, int32_t rssi) {
+void on_mesh_message_received(const MeshMessage& msg, int32_t /*rssi*/) {
     messages_received++;
-    
-    // Don't forward our own heartbeats back to serial
-    // (they're already sent in sendHeartbeat)
-    if (msg.type == MessageType::HEARTBEAT && msg.sender_id == EspMeshFlood::instance().get_node_id()) {
-        return;  // Skip our own heartbeats coming back from mesh
+
+    // Skip our own heartbeats echoing back from the mesh — already sent in sendHeartbeat().
+    if (msg.type == MessageType::HEARTBEAT &&
+        msg.sender_id == EspMeshFlood::instance().get_node_id()) {
+        return;
     }
 
     uint8_t serialized[MessageSerializer::max_size()];
-    size_t serialized_size = MessageSerializer::serialize(msg, serialized, sizeof(serialized));
+    const size_t serialized_size = MessageSerializer::serialize(msg, serialized, sizeof(serialized));
     if (serialized_size > 0) {
-        sendSerialMessage(serialized, serialized_size);
+        host_transport.send(serialized, serialized_size);
     }
 }
 
-/**
- * @brief Initialize the mesh network
- */
 void setup() {
-    Serial.begin(115200);
+    // init() calls Serial.begin(115200) internally
+    host_transport.init();
     delay(1000);
-    
-    Serial.println("ESP32 Mesh Node starting...");
-    Serial.print("Heartbeat interval: ");
-    Serial.print(HEARTBEAT_INTERVAL_MS / 1000);
-    Serial.println(" seconds");
 
-    // Create and initialize the ESP-NOW transport layer
+    Serial.println("ESP32 Mesh Node (Serial) starting...");
+
     auto transport = std::make_shared<espMeshFlood::EspNowTransportImpl>();
-    
     if (!EspMeshFlood::instance().init(on_mesh_message_received, transport)) {
         Serial.println("Failed to initialize mesh!");
-        while (1) {
-            delay(1000);
-        }
+        while (1) delay(1000);
     }
-    
+
+    // Register host → mesh receive callback.
+    // FrameParser strips framing; callback receives raw protobuf bytes.
+    host_transport.register_receive_callback([](const uint8_t* data, size_t len) {
+        MeshMessage msg;
+        if (MessageSerializer::deserialize(data, len, msg)) {
+            EspMeshFlood::instance().send_message(data, len, msg.ttl);
+            messages_sent++;
+        }
+    });
+
     Serial.println("Mesh initialized successfully");
     Serial.print("Node ID: ");
     Serial.println(EspMeshFlood::instance().get_node_id());
 }
 
-/**
- * @brief Main loop - process serial data, send heartbeats, and maintain the mesh
- */
 void loop() {
-    unsigned long now = millis();
-    
-    // Process incoming serial data (highest priority)
-    processIncomingSerialData();
-    
-    // Send heartbeat at regular intervals
+    const unsigned long now = millis();
+
+    // Drain serial RX bytes into the frame parser (highest priority).
+    host_transport.poll();
+
     if (now - last_heartbeat_time >= HEARTBEAT_INTERVAL_MS) {
         last_heartbeat_time = now;
         sendHeartbeat();
     }
-    
-    // Periodic maintenance
+
     if (now - last_maintenance_time >= MAINTENANCE_INTERVAL_MS) {
         last_maintenance_time = now;
-        
-        // Update system time and perform maintenance
         EspMeshFlood::instance().update_time(now);
         EspMeshFlood::instance().do_maintenance();
     }
-    
+
     delay(100);
 }

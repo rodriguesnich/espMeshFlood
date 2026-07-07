@@ -13,6 +13,9 @@ include_directories(${CMAKE_SOURCE_DIR}/test/mocks)
 # Find Google Test
 find_package(GTest REQUIRED)
 
+# Exclude BLE from native builds via UNIT_TESTING define (ble_host_transport.cpp is a no-op)
+add_compile_definitions(UNIT_TESTING)
+
 # Source files for the library
 file(GLOB EFMP_SOURCES
     "${CMAKE_SOURCE_DIR}/src/espMeshFlood/cache/*.cpp"
@@ -21,6 +24,7 @@ file(GLOB EFMP_SOURCES
     "${CMAKE_SOURCE_DIR}/src/espMeshFlood/protocol/*.cpp"
     "${CMAKE_SOURCE_DIR}/src/espMeshFlood/serialization/*.cpp"
     "${CMAKE_SOURCE_DIR}/src/espMeshFlood/transport/*.cpp"
+    "${CMAKE_SOURCE_DIR}/src/espMeshFlood/host/*.cpp"
     "${CMAKE_SOURCE_DIR}/src/espMeshFlood/*.cpp"
 )
 
