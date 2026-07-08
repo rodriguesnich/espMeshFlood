@@ -4,9 +4,28 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <esp_now.h>
+#include <esp_wifi.h>
+#include <esp_idf_version.h>
 #include <cstring>
 
 namespace espMeshFlood {
+
+static constexpr uint8_t kEspNowChannel = 1;
+static constexpr int32_t kDefaultRssi = -50;
+
+static uint8_t default_wifi_protocol_bitmap() {
+    uint8_t bitmap = 0;
+#ifdef WIFI_PROTOCOL_11B
+    bitmap |= WIFI_PROTOCOL_11B;
+#endif
+#ifdef WIFI_PROTOCOL_11G
+    bitmap |= WIFI_PROTOCOL_11G;
+#endif
+#ifdef WIFI_PROTOCOL_11N
+    bitmap |= WIFI_PROTOCOL_11N;
+#endif
+    return bitmap;
+}
 
 // Static instance pointer for callback handling
 static EspNowTransportImpl* g_transport_instance = nullptr;
@@ -17,11 +36,22 @@ static EspNowTransportImpl* g_transport_instance = nullptr;
  * ESP-NOW callbacks are C-style, so we use a static function
  * that delegates to the instance.
  */
+#if defined(ESP_IDF_VERSION_MAJOR) && (ESP_IDF_VERSION_MAJOR >= 5)
+static void esp_now_recv_cb_static(const esp_now_recv_info_t* recv_info, const uint8_t* data,
+                                   int data_len) {
+#else
 static void esp_now_recv_cb_static(const uint8_t* mac_addr, const uint8_t* data, int data_len) {
+#endif
     if (g_transport_instance && data && data_len > 0) {
-        // Get RSSI from the MAC address context (not directly available in callback)
-        // ESP-NOW doesn't provide RSSI in the callback, so we use a default value
-        int32_t rssi = -50;  // Default placeholder
+#if defined(ESP_IDF_VERSION_MAJOR) && (ESP_IDF_VERSION_MAJOR >= 5)
+        int32_t rssi = kDefaultRssi;
+        if (recv_info && recv_info->rx_ctrl) {
+            rssi = recv_info->rx_ctrl->rssi;
+        }
+#else
+        (void)mac_addr;
+        int32_t rssi = kDefaultRssi;
+#endif
         
         g_transport_instance->on_data_received(data, static_cast<size_t>(data_len), rssi);
     }
@@ -55,7 +85,26 @@ bool EspNowTransportImpl::init() {
     }
 
     // Ensure WiFi is in STA mode (required for ESP-NOW)
-    WiFi.mode(WIFI_STA);
+    if (!WiFi.mode(WIFI_STA)) {
+        Serial.println("[EspNowTransport] Failed to set WiFi STA mode");
+        return false;
+    }
+
+    if (esp_wifi_set_channel(kEspNowChannel, WIFI_SECOND_CHAN_NONE) != ESP_OK) {
+        Serial.println("[EspNowTransport] Failed to set WiFi channel");
+        return false;
+    }
+
+    uint8_t protocol_bitmap = 0;
+    if (esp_wifi_get_protocol(WIFI_IF_STA, &protocol_bitmap) != ESP_OK) {
+        protocol_bitmap = default_wifi_protocol_bitmap();
+    }
+
+    protocol_bitmap |= WIFI_PROTOCOL_LR;
+    if (esp_wifi_set_protocol(WIFI_IF_STA, protocol_bitmap) != ESP_OK) {
+        Serial.println("[EspNowTransport] Failed to enable WiFi long range protocol");
+        return false;
+    }
     
     // Initialize ESP-NOW
     if (esp_now_init() != ESP_OK) {
@@ -74,7 +123,7 @@ bool EspNowTransportImpl::init() {
     esp_now_peer_info_t peer_info = {};
     std::memset(&peer_info, 0, sizeof(peer_info));
     std::memset(peer_info.peer_addr, 0xFF, ESP_NOW_ETH_ALEN);
-    peer_info.channel = 0;  // Use default channel
+    peer_info.channel = kEspNowChannel;
     peer_info.encrypt = false;
 
     if (esp_now_add_peer(&peer_info) != ESP_OK) {
@@ -93,6 +142,7 @@ bool EspNowTransportImpl::init() {
     
     Serial.print("[EspNowTransport] Initialized with node ID: 0x");
     Serial.println(node_id_, HEX);
+    Serial.println("[EspNowTransport] WiFi long range protocol enabled");
 
     return true;
 }

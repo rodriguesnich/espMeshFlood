@@ -4,8 +4,8 @@
 #include "espMeshFlood/host/host_transport.h"
 #include "espMeshFlood/host/frame_parser.h"
 
-// BLE support is only available on-device; excluded from native unit test builds.
-#ifndef UNIT_TESTING
+// BLE support is only available in BLE firmware builds on-device.
+#if defined(HOST_TRANSPORT_BLE) && !defined(UNIT_TESTING)
 
 #include <NimBLEDevice.h>
 
@@ -77,5 +77,5 @@ private:
 
 }  // namespace espMeshFlood
 
-#endif  // UNIT_TESTING
+#endif  // defined(HOST_TRANSPORT_BLE) && !defined(UNIT_TESTING)
 #endif  // ESPMESHFLOOD_HOST_BLE_HOST_TRANSPORT_H

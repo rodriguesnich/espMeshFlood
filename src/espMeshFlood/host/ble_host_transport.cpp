@@ -1,5 +1,5 @@
-// BLE support is only available on-device; excluded from native unit test builds.
-#ifndef UNIT_TESTING
+// BLE support is only available in BLE firmware builds on-device.
+#if defined(HOST_TRANSPORT_BLE) && !defined(UNIT_TESTING)
 
 #include "espMeshFlood/host/ble_host_transport.h"
 #include "espMeshFlood/serialization/message_serializer.h"
@@ -84,4 +84,4 @@ void BleHostTransport::onWrite(NimBLECharacteristic* characteristic) {
 
 }  // namespace espMeshFlood
 
-#endif  // UNIT_TESTING
+#endif  // defined(HOST_TRANSPORT_BLE) && !defined(UNIT_TESTING)
