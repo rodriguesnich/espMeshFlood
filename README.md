@@ -274,11 +274,8 @@ static bool deserialize(const uint8_t* buffer, size_t buffer_size,
 
 ## Future Features (v2+)
 
-- [ ] Criptografia (optional encryption)
-- [ ] Clock synchronization for collision avoidance
 - [ ] Unicast messaging
 - [ ] Intelligent relayer selection
-- [ ] Message fragmentation for large payloads
 - [ ] Adaptive TTL based on network density
 - [ ] Gossip probability tuning
 
@@ -287,8 +284,6 @@ static bool deserialize(const uint8_t* buffer, size_t buffer_size,
 ### MVP Scope
 - Broadcast-only messaging (no unicast)
 - No encryption or authentication
-- No clock synchronization
-- No fragmentation
 - Single TTL per message (no per-node override)
 
 ### ESP-NOW Constraints

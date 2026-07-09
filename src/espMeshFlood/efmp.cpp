@@ -7,42 +7,8 @@
 
 namespace espMeshFlood {
 
-// Provide a mock transport only for unit testing and native builds.
-#if defined(UNIT_TESTING) || !defined(ESP32)
-class MockEspNowTransport : public EspNowTransport {
-public:
-    bool init() override {
-        initialized_ = true;
-        return true;
-    }
-
-    void deinit() override {
-        initialized_ = false;
-    }
-
-    bool send_broadcast(const uint8_t* data, size_t length) override {
-        if (!initialized_) return false;
-        return true;
-    }
-
-    void register_receive_callback(ReceiveCallback callback) override {
-        receive_callback_ = callback;
-    }
-
-    uint32_t get_node_id() const override {
-        return node_id_;
-    }
-
-    bool is_initialized() const override {
-        return initialized_;
-    }
-
-private:
-    bool initialized_ = false;
-    ReceiveCallback receive_callback_;
-    uint32_t node_id_ = 0x12345678;
-};
-#endif
+// Runtime must use real ESP-NOW transport on ESP32. Mocks for unit tests
+// should be provided only by test builds and not included in runtime code.
 
 EspMeshFlood& EspMeshFlood::instance() {
     static EspMeshFlood instance;
@@ -56,11 +22,13 @@ bool EspMeshFlood::init(MessageReceivedCallback callback, std::shared_ptr<EspNow
 
     // Create transport if not provided
     if (!transport) {
-    // Default runtime transport: use real ESP-NOW on ESP32, otherwise use mock for testing/native
-#if defined(ESP32) && !defined(UNIT_TESTING)
-    transport = std::make_shared<EspNowTransportImpl>();
+        // Runtime-only behavior: require ESP32 and use real ESP-NOW transport.
+#if defined(ESP32)
+        transport = std::make_shared<EspNowTransportImpl>();
 #else
-    transport = std::make_shared<MockEspNowTransport>();
+        // Non-ESP32 native builds must supply a transport (unit tests may
+        // inject mocks via the `transport` parameter guarded by UNIT_TESTING).
+        return false;
 #endif
     }
     transport_ = transport;

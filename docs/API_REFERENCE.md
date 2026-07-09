@@ -55,8 +55,8 @@ Initialize the EFMP library.
   - Signature: `void(const MeshMessage& msg, int32_t rssi)`
   - `rssi`: Signal strength in dBm (0 for own messages)
 - `transport` (optional): Custom transport implementation
-  - If nullptr, uses default mock transport (desktop testing)
-  - On ESP32, should use real EspNowTransportImpl
+    - On `ESP32` builds, if `nullptr` the library constructs and uses the platform `EspNowTransportImpl`.
+    - On non-ESP32 builds a transport must be supplied (test builds may inject mocks via the `transport` parameter guarded by `UNIT_TESTING`).
 
 **Returns**: `true` if initialization succeeded, `false` otherwise
 
@@ -162,7 +162,7 @@ Update system time for cache management.
 
 **Notes**:
 - Called automatically on ESP32 via system timer
-- On desktop testing, update explicitly if testing time-dependent behavior
+- For test builds running off-target, the caller must update time explicitly; test mocks should be provided via the `UNIT_TESTING` build flag.
 
 **Example**:
 ```cpp
