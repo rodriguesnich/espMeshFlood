@@ -1,12 +1,14 @@
 #include "espMeshFlood/efmp.h"
 #include "espMeshFlood/protocol/mesh_protocol.h"
 #include "espMeshFlood/transport/esp_now_transport.h"
+#include "espMeshFlood/transport/esp_now_transport_impl.h"
 #include "espMeshFlood/types.h"
 #include <memory>
 
 namespace espMeshFlood {
 
-// Placeholder for real ESP-NOW transport (will be implemented for ESP32)
+// Provide a mock transport only for unit testing and native builds.
+#if defined(UNIT_TESTING) || !defined(ESP32)
 class MockEspNowTransport : public EspNowTransport {
 public:
     bool init() override {
@@ -20,7 +22,6 @@ public:
 
     bool send_broadcast(const uint8_t* data, size_t length) override {
         if (!initialized_) return false;
-        // Placeholder: just succeed
         return true;
     }
 
@@ -41,6 +42,7 @@ private:
     ReceiveCallback receive_callback_;
     uint32_t node_id_ = 0x12345678;
 };
+#endif
 
 EspMeshFlood& EspMeshFlood::instance() {
     static EspMeshFlood instance;
@@ -54,7 +56,12 @@ bool EspMeshFlood::init(MessageReceivedCallback callback, std::shared_ptr<EspNow
 
     // Create transport if not provided
     if (!transport) {
-        transport = std::make_shared<MockEspNowTransport>();
+    // Default runtime transport: use real ESP-NOW on ESP32, otherwise use mock for testing/native
+#if defined(ESP32) && !defined(UNIT_TESTING)
+    transport = std::make_shared<EspNowTransportImpl>();
+#else
+    transport = std::make_shared<MockEspNowTransport>();
+#endif
     }
     transport_ = transport;
 

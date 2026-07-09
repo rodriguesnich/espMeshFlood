@@ -1,0 +1,163 @@
+Start testing: Jul 08 13:10 -03
+----------------------------------------------------------
+1/1 Testing: efmp_all_tests
+1/1 Test: efmp_all_tests
+Command: "/home/rodriguesnich/Nextcloud/nick's/Projects/Code/espMeshFlood2 (2)/build_verify/test_all"
+Directory: /home/rodriguesnich/Nextcloud/nick's/Projects/Code/espMeshFlood2 (2)/build_verify
+"efmp_all_tests" start time: Jul 08 13:10 -03
+Output:
+----------------------------------------------------------
+Running main() from ./googletest/src/gtest_main.cc
+[==========] Running 59 tests from 7 test suites.
+[----------] Global test environment set-up.
+[----------] 9 tests from MessageCacheTest
+[ RUN      ] MessageCacheTest.SingleMessageNotInCache
+[       OK ] MessageCacheTest.SingleMessageNotInCache (0 ms)
+[ RUN      ] MessageCacheTest.AddMessageThenExists
+[       OK ] MessageCacheTest.AddMessageThenExists (0 ms)
+[ RUN      ] MessageCacheTest.MultipleMessagesTracked
+[       OK ] MessageCacheTest.MultipleMessagesTracked (0 ms)
+[ RUN      ] MessageCacheTest.DuplicateMessageRejected
+[       OK ] MessageCacheTest.DuplicateMessageRejected (0 ms)
+[ RUN      ] MessageCacheTest.ExpiredEntriesRemoved
+[       OK ] MessageCacheTest.ExpiredEntriesRemoved (0 ms)
+[ RUN      ] MessageCacheTest.CacheBoundedSize
+[       OK ] MessageCacheTest.CacheBoundedSize (0 ms)
+[ RUN      ] MessageCacheTest.ClearRemovesAllEntries
+[       OK ] MessageCacheTest.ClearRemovesAllEntries (0 ms)
+[ RUN      ] MessageCacheTest.MixedExpirationAndCapacity
+[       OK ] MessageCacheTest.MixedExpirationAndCapacity (0 ms)
+[ RUN      ] MessageCacheTest.SameMessageIdDifferentSendersTrackedSeparately
+[       OK ] MessageCacheTest.SameMessageIdDifferentSendersTrackedSeparately (0 ms)
+[----------] 9 tests from MessageCacheTest (0 ms total)
+
+[----------] 13 tests from MessageMetadataTest
+[ RUN      ] MessageMetadataTest.InitialTTL
+[       OK ] MessageMetadataTest.InitialTTL (0 ms)
+[ RUN      ] MessageMetadataTest.InitialRelayCount
+[       OK ] MessageMetadataTest.InitialRelayCount (0 ms)
+[ RUN      ] MessageMetadataTest.CanRetransmitWithTTL
+[       OK ] MessageMetadataTest.CanRetransmitWithTTL (0 ms)
+[ RUN      ] MessageMetadataTest.NotExpiredWithTTL
+[       OK ] MessageMetadataTest.NotExpiredWithTTL (0 ms)
+[ RUN      ] MessageMetadataTest.DecrementTTL
+[       OK ] MessageMetadataTest.DecrementTTL (0 ms)
+[ RUN      ] MessageMetadataTest.IncrementRelayCount
+[       OK ] MessageMetadataTest.IncrementRelayCount (0 ms)
+[ RUN      ] MessageMetadataTest.TTLDecrementToZero
+[       OK ] MessageMetadataTest.TTLDecrementToZero (0 ms)
+[ RUN      ] MessageMetadataTest.TTLZeroBlocksRetransmission
+[       OK ] MessageMetadataTest.TTLZeroBlocksRetransmission (0 ms)
+[ RUN      ] MessageMetadataTest.RelayCountIncrement
+[       OK ] MessageMetadataTest.RelayCountIncrement (0 ms)
+[ RUN      ] MessageMetadataTest.SetTTL
+[       OK ] MessageMetadataTest.SetTTL (0 ms)
+[ RUN      ] MessageMetadataTest.SetRelayCount
+[       OK ] MessageMetadataTest.SetRelayCount (0 ms)
+[ RUN      ] MessageMetadataTest.MultipleDecrements
+[       OK ] MessageMetadataTest.MultipleDecrements (0 ms)
+[ RUN      ] MessageMetadataTest.TTLZeroMinusDecrement
+[       OK ] MessageMetadataTest.TTLZeroMinusDecrement (0 ms)
+[----------] 13 tests from MessageMetadataTest (0 ms total)
+
+[----------] 8 tests from RandomBackoffTest
+[ RUN      ] RandomBackoffTest.DelayInRange
+[       OK ] RandomBackoffTest.DelayInRange (0 ms)
+[ RUN      ] RandomBackoffTest.DelayVariation
+[       OK ] RandomBackoffTest.DelayVariation (0 ms)
+[ RUN      ] RandomBackoffTest.ZeroRangeReturnsMin
+[       OK ] RandomBackoffTest.ZeroRangeReturnsMin (0 ms)
+[ RUN      ] RandomBackoffTest.SeededDeterminism
+[       OK ] RandomBackoffTest.SeededDeterminism (0 ms)
+[ RUN      ] RandomBackoffTest.DifferentSeedsDifferentSequence
+[       OK ] RandomBackoffTest.DifferentSeedsDifferentSequence (0 ms)
+[ RUN      ] RandomBackoffTest.SetSeedAffectsSequence
+[       OK ] RandomBackoffTest.SetSeedAffectsSequence (0 ms)
+[ RUN      ] RandomBackoffTest.SmallRange
+[       OK ] RandomBackoffTest.SmallRange (0 ms)
+[ RUN      ] RandomBackoffTest.LargeRange
+[       OK ] RandomBackoffTest.LargeRange (0 ms)
+[----------] 8 tests from RandomBackoffTest (0 ms total)
+
+[----------] 8 tests from SerializationTest
+[ RUN      ] SerializationTest.SerializeDeserializeBasicMessage
+[       OK ] SerializationTest.SerializeDeserializeBasicMessage (0 ms)
+[ RUN      ] SerializationTest.EmptyPayload
+[       OK ] SerializationTest.EmptyPayload (0 ms)
+[ RUN      ] SerializationTest.LargePayload
+[       OK ] SerializationTest.LargePayload (0 ms)
+[ RUN      ] SerializationTest.ZeroValues
+[       OK ] SerializationTest.ZeroValues (0 ms)
+[ RUN      ] SerializationTest.MaxValues
+[       OK ] SerializationTest.MaxValues (0 ms)
+[ RUN      ] SerializationTest.BufferTooSmall
+[       OK ] SerializationTest.BufferTooSmall (0 ms)
+[ RUN      ] SerializationTest.MalformedInput
+[       OK ] SerializationTest.MalformedInput (0 ms)
+[ RUN      ] SerializationTest.MultipleRoundTrips
+[       OK ] SerializationTest.MultipleRoundTrips (0 ms)
+[----------] 8 tests from SerializationTest (0 ms total)
+
+[----------] 8 tests from FrameParserTest
+[ RUN      ] FrameParserTest.ParsesCompleteFrame
+[       OK ] FrameParserTest.ParsesCompleteFrame (0 ms)
+[ RUN      ] FrameParserTest.HandlesStreamingByteByByte
+[       OK ] FrameParserTest.HandlesStreamingByteByByte (0 ms)
+[ RUN      ] FrameParserTest.ParsesMultipleBackToBackFrames
+[       OK ] FrameParserTest.ParsesMultipleBackToBackFrames (0 ms)
+[ RUN      ] FrameParserTest.SkipsGarbageBeforeMagicByte
+[       OK ] FrameParserTest.SkipsGarbageBeforeMagicByte (0 ms)
+[ RUN      ] FrameParserTest.RejectsZeroLengthFrame
+[       OK ] FrameParserTest.RejectsZeroLengthFrame (0 ms)
+[ RUN      ] FrameParserTest.RejectsExcessiveLengthFrame
+[       OK ] FrameParserTest.RejectsExcessiveLengthFrame (0 ms)
+[ RUN      ] FrameParserTest.RecoversAfterInvalidLength
+[       OK ] FrameParserTest.RecoversAfterInvalidLength (0 ms)
+[ RUN      ] FrameParserTest.ResetClearsStateAndAllowsNewFrame
+[       OK ] FrameParserTest.ResetClearsStateAndAllowsNewFrame (0 ms)
+[----------] 8 tests from FrameParserTest (0 ms total)
+
+[----------] 7 tests from SerialTransportTest
+[ RUN      ] SerialTransportTest.InitSucceeds
+[       OK ] SerialTransportTest.InitSucceeds (0 ms)
+[ RUN      ] SerialTransportTest.IsAlwaysConnected
+[       OK ] SerialTransportTest.IsAlwaysConnected (0 ms)
+[ RUN      ] SerialTransportTest.SendWritesCorrectFrame
+[       OK ] SerialTransportTest.SendWritesCorrectFrame (0 ms)
+[ RUN      ] SerialTransportTest.SendLittleEndianLength
+[       OK ] SerialTransportTest.SendLittleEndianLength (0 ms)
+[ RUN      ] SerialTransportTest.PollFiresReceiveCallbackOnCompleteFrame
+[       OK ] SerialTransportTest.PollFiresReceiveCallbackOnCompleteFrame (0 ms)
+[ RUN      ] SerialTransportTest.PollHandlesStreamingBytes
+[       OK ] SerialTransportTest.PollHandlesStreamingBytes (0 ms)
+[ RUN      ] SerialTransportTest.PollIgnoresGarbageBeforeMagic
+[       OK ] SerialTransportTest.PollIgnoresGarbageBeforeMagic (0 ms)
+[----------] 7 tests from SerialTransportTest (0 ms total)
+
+[----------] 6 tests from MeshProtocolIntegrationTest
+[ RUN      ] MeshProtocolIntegrationTest.DirectDelivery
+[       OK ] MeshProtocolIntegrationTest.DirectDelivery (0 ms)
+[ RUN      ] MeshProtocolIntegrationTest.OneHopRelay
+[       OK ] MeshProtocolIntegrationTest.OneHopRelay (0 ms)
+[ RUN      ] MeshProtocolIntegrationTest.MultiHopPropagation
+[       OK ] MeshProtocolIntegrationTest.MultiHopPropagation (0 ms)
+[ RUN      ] MeshProtocolIntegrationTest.DeduplicationInProtocol
+[       OK ] MeshProtocolIntegrationTest.DeduplicationInProtocol (0 ms)
+[ RUN      ] MeshProtocolIntegrationTest.TTLLimit
+[       OK ] MeshProtocolIntegrationTest.TTLLimit (0 ms)
+[ RUN      ] MeshProtocolIntegrationTest.RedundantPathsDeduplication
+[       OK ] MeshProtocolIntegrationTest.RedundantPathsDeduplication (0 ms)
+[----------] 6 tests from MeshProtocolIntegrationTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 59 tests from 7 test suites ran. (0 ms total)
+[  PASSED  ] 59 tests.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"efmp_all_tests" end time: Jul 08 13:10 -03
+"efmp_all_tests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Jul 08 13:10 -03

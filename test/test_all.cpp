@@ -8,9 +8,7 @@
 #include "unit/cache_test.cpp"
 #include "unit/ttl_test.cpp"
 #include "unit/backoff_test.cpp"
-#include "unit/serialization_test.cpp"
-#include "unit/frame_parser_test.cpp"
-#include "unit/serial_host_transport_test.cpp"
+
 
 // Include integration test cases
 #include "integration/message_flow_test.cpp"

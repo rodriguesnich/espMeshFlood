@@ -1,0 +1,21 @@
+{
+  "name": "espMeshFlood",
+  "version": "0.1.0",
+  "description": "ESP-NOW mesh flooding protocol for ESP32 (EFMP)",
+  "keywords": ["esp32", "esp-now", "mesh", "flood"],
+  "repository": {
+    "type": "git",
+    "url": "https://example.com/your/repo.git"
+  },
+  "authors": [
+    {
+      "name": "Your Name"
+    }
+  ],
+  "license": "MIT",
+  "platforms": ["espressif32"],
+  "frameworks": ["arduino"],
+  "dependencies": {
+    "nanopb/Nanopb": "^0.4.8"
+  }
+}

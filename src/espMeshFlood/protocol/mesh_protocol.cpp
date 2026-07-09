@@ -5,9 +5,7 @@
 #ifdef ARDUINO
 #include <Arduino.h>
 #endif
-#include <chrono>
 #include <cstring>
-#include <thread>
 
 namespace espMeshFlood {
 
@@ -42,6 +40,7 @@ void MeshProtocol::deinit() {
     if (cache_) {
         cache_->clear();
     }
+    pending_retransmissions_.clear();
 }
 
 bool MeshProtocol::send_message(const uint8_t* payload, size_t payload_size, uint32_t ttl) {
@@ -123,6 +122,16 @@ void MeshProtocol::update_time(uint64_t current_time_ms) {
 
 void MeshProtocol::do_maintenance() {
     cache_->cleanup_expired(current_time_ms_);
+
+    // Dispatch any retransmissions that are due at the current time.
+    for (auto it = pending_retransmissions_.begin(); it != pending_retransmissions_.end();) {
+        if (it->due_time_ms <= current_time_ms_) {
+            do_retransmit(it->message);
+            it = pending_retransmissions_.erase(it);
+            continue;
+        }
+        ++it;
+    }
 }
 
 uint32_t MeshProtocol::generate_message_id() {
@@ -132,14 +141,8 @@ uint32_t MeshProtocol::generate_message_id() {
 
 void MeshProtocol::schedule_retransmit(const MeshMessage& message) {
     const uint32_t delay_ms = backoff_->get_delay();
-
-#ifdef ARDUINO
-    delay(delay_ms);
-#else
-    std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
-#endif
-
-    do_retransmit(message);
+    PendingRetransmission pending{message, current_time_ms_ + static_cast<uint64_t>(delay_ms)};
+    pending_retransmissions_.push_back(std::move(pending));
 }
 
 void MeshProtocol::do_retransmit(const MeshMessage& message) {

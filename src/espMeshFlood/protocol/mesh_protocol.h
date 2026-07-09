@@ -6,14 +6,13 @@
 #include "espMeshFlood/message/message_metadata.h"
 #include "espMeshFlood/backoff/random_backoff.h"
 #include "espMeshFlood/transport/esp_now_transport.h"
+#include "espMeshFlood/types.h"
 #include <cstdint>
+#include <deque>
 #include <functional>
 #include <memory>
 
 namespace espMeshFlood {
-
-// Forward declaration
-struct MeshMessage;
 
 // Typedef for application callback
 using ApplicationCallback = std::function<void(const MeshMessage& message, int32_t rssi)>;
@@ -91,6 +90,13 @@ private:
     std::unique_ptr<RandomBackoff> backoff_;
     uint64_t current_time_ms_;
     uint32_t message_counter_;
+
+    struct PendingRetransmission {
+        MeshMessage message;
+        uint64_t due_time_ms;
+    };
+
+    std::deque<PendingRetransmission> pending_retransmissions_;
 
     /**
      * @brief Generate unique message ID

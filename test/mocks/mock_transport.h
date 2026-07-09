@@ -1,36 +1,28 @@
-#ifndef ESPMESHFLOOD_TEST_MOCKS_MOCK_TRANSPORT_H
-#define ESPMESHFLOOD_TEST_MOCKS_MOCK_TRANSPORT_H
+#pragma once
 
-#include "../src/espMeshFlood/transport/esp_now_transport.h"
+#include <cstdint>
 #include <vector>
+#include <functional>
+#include <mutex>
 #include <deque>
+#include "espMeshFlood/transport/esp_now_transport.h"
 
 namespace espMeshFlood {
 namespace test {
 
-/**
- * @brief Mock ESP-NOW transport for testing
- * 
- * Records sent messages and allows simulating received messages.
- */
 class MockEspNowTransport : public EspNowTransport {
 public:
-    MockEspNowTransport(uint32_t node_id = 0x11111111) : node_id_(node_id) {}
+    using ReceiveCallback = ::espMeshFlood::ReceiveCallback;
 
-    bool init() override {
-        initialized_ = true;
-        return true;
-    }
+    explicit MockEspNowTransport(uint32_t node_id = 0xAAAAAAAA) : node_id_(node_id) {}
 
-    void deinit() override {
-        initialized_ = false;
-    }
+    bool init() override { initialized_ = true; return true; }
+    void deinit() override { initialized_ = false; }
 
     bool send_broadcast(const uint8_t* data, size_t length) override {
         if (!initialized_) return false;
-        
-        std::vector<uint8_t> message(data, data + length);
-        sent_messages_.push_back(message);
+        std::lock_guard<std::mutex> lk(m_);
+        sent_messages_.emplace_back(data, data + length);
         return true;
     }
 
@@ -38,41 +30,29 @@ public:
         receive_callback_ = callback;
     }
 
-    uint32_t get_node_id() const override {
-        return node_id_;
-    }
-
-    bool is_initialized() const override {
-        return initialized_;
-    }
+    uint32_t get_node_id() const override { return node_id_; }
+    bool is_initialized() const override { return initialized_; }
 
     // Test helpers
-    void simulate_receive(const uint8_t* data, size_t length, int32_t rssi = -50) {
+    size_t get_sent_message_count() const { std::lock_guard<std::mutex> lk(m_); return sent_messages_.size(); }
+    std::vector<uint8_t> get_sent_message(size_t idx) const { std::lock_guard<std::mutex> lk(m_); return sent_messages_.at(idx); }
+
+    // Simulate receiving raw data from the radio. Calls the registered callback if present.
+    void simulate_receive(const uint8_t* data, size_t length, int32_t rssi) {
         if (receive_callback_) {
-            receive_callback_(data, length, rssi);
+            // copy into vector and pass to callback through transport interface
+            std::vector<uint8_t> v(data, data + length);
+            receive_callback_(v.data(), v.size(), rssi);
         }
     }
 
-    size_t get_sent_message_count() const {
-        return sent_messages_.size();
-    }
-
-    const std::vector<uint8_t>& get_sent_message(size_t index) const {
-        return sent_messages_[index];
-    }
-
-    void clear_sent_messages() {
-        sent_messages_.clear();
-    }
-
 private:
-    bool initialized_ = false;
     uint32_t node_id_;
-    ReceiveCallback receive_callback_;
-    std::vector<std::vector<uint8_t>> sent_messages_;
+    bool initialized_ = false;
+    ReceiveCallback receive_callback_ = nullptr;
+    mutable std::mutex m_;
+    std::deque<std::vector<uint8_t>> sent_messages_;
 };
 
-}  // namespace test
-}  // namespace espMeshFlood
-
-#endif  // ESPMESHFLOOD_TEST_MOCKS_MOCK_TRANSPORT_H
+} // namespace test
+} // namespace espMeshFlood

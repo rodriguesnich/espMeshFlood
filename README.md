@@ -102,6 +102,13 @@ platformio run --environment native_test
 platformio test --environment native_test
 ```
 
+### CMake Consumer Integration
+
+```cmake
+add_subdirectory(path/to/espMeshFlood)
+target_link_libraries(your_target PRIVATE espMeshFlood::espMeshFlood)
+```
+
 ## Usage
 
 ### Basic Example
@@ -127,7 +134,7 @@ void setup() {
 }
 
 void loop() {
-    // Perform periodic maintenance
+    // Perform periodic maintenance (cache cleanup + scheduled retransmissions)
     EspMeshFlood::instance().do_maintenance();
     delay(1000);
 }
@@ -169,8 +176,10 @@ message MeshMessage {
 2. **Receiver**: 
    - Checks if message_id is in cache (deduplication)
    - If new: registers in cache, delivers to application
-   - If TTL > 0: schedules random-delay retransmission
+    - If TTL > 0: schedules random-delay retransmission
 3. **Retransmission**: Decrements TTL, broadcasts
+
+Retransmission scheduling is non-blocking and dispatched during `do_maintenance()`.
 
 ### Deduplication
 

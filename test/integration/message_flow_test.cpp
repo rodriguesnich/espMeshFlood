@@ -2,14 +2,19 @@
 #include "espMeshFlood/protocol/mesh_protocol.h"
 #include "espMeshFlood/types.h"
 #include "espMeshFlood/serialization/message_serializer.h"
-#include "mock_transport.h"
 #include <memory>
+#include "mock_transport.h"
 
 using namespace espMeshFlood;
 using namespace espMeshFlood::test;
 
 class MeshProtocolIntegrationTest : public ::testing::Test {
 protected:
+    static void advance_and_maintain(MeshProtocol& protocol, uint64_t now_ms) {
+        protocol.update_time(now_ms);
+        protocol.do_maintenance();
+    }
+
     void SetUp() override {
         transport = std::make_shared<MockEspNowTransport>(0x11111111);
         
@@ -83,6 +88,10 @@ TEST_F(MeshProtocolIntegrationTest, OneHopRelay) {
     // Simulate B receiving A's message
     transport_b->simulate_receive(sent_msg_data.data(), sent_msg_data.size(), -50);
 
+    // Retransmit is scheduled, not immediate.
+    EXPECT_EQ(transport_b->get_sent_message_count(), 0);
+    advance_and_maintain(protocol_b, 2000);
+
     // B should have received it
     EXPECT_EQ(received_messages.size(), 1);
     EXPECT_EQ(received_messages[0].msg.message_id, sent_msg.message_id);
@@ -134,6 +143,7 @@ TEST_F(MeshProtocolIntegrationTest, MultiHopPropagation) {
 
     // B receives and relays
     transports[1]->simulate_receive(sent_msg_data.data(), sent_msg_data.size(), -50);
+    advance_and_maintain(*protocols[1], 2000);
     EXPECT_GE(transports[1]->get_sent_message_count(), 1);
 
     // Get B's relayed message
@@ -143,6 +153,7 @@ TEST_F(MeshProtocolIntegrationTest, MultiHopPropagation) {
 
     // C receives B's relay
     transports[2]->simulate_receive(relayed_from_b.data(), relayed_from_b.size(), -60);
+    advance_and_maintain(*protocols[2], 3000);
     EXPECT_GE(transports[2]->get_sent_message_count(), 1);
 
     // Get C's relayed message
@@ -223,6 +234,7 @@ TEST_F(MeshProtocolIntegrationTest, TTLLimit) {
 
     // B receives and relays (TTL becomes 1)
     transports[1]->simulate_receive(msg_data.data(), msg_data.size(), -50);
+    advance_and_maintain(*protocols[1], 2000);
     EXPECT_GE(transports[1]->get_sent_message_count(), 1);
 
     auto msg_from_b = transports[1]->get_sent_message(0);
@@ -231,6 +243,7 @@ TEST_F(MeshProtocolIntegrationTest, TTLLimit) {
 
     // C receives and relays (TTL becomes 0)
     transports[2]->simulate_receive(msg_from_b.data(), msg_from_b.size(), -50);
+    advance_and_maintain(*protocols[2], 3000);
     EXPECT_GE(transports[2]->get_sent_message_count(), 1);
 
     auto msg_from_c = transports[2]->get_sent_message(0);
@@ -240,6 +253,7 @@ TEST_F(MeshProtocolIntegrationTest, TTLLimit) {
     // D and E should NOT receive because TTL is 0
     // (In our implementation, TTL=0 means no retransmission)
     transports[3]->simulate_receive(msg_from_c.data(), msg_from_c.size(), -50);
+    advance_and_maintain(*protocols[3], 4000);
     EXPECT_EQ(transports[3]->get_sent_message_count(), 0);  // Should not relay
 
     uint8_t dummy = 0;
@@ -294,6 +308,8 @@ TEST_F(MeshProtocolIntegrationTest, RedundantPathsDeduplication) {
     // B and C receive the same original message from A and relay it.
     transport_b->simulate_receive(from_a.data(), from_a.size(), -45);
     transport_c->simulate_receive(from_a.data(), from_a.size(), -47);
+    advance_and_maintain(protocol_b, 2000);
+    advance_and_maintain(protocol_c, 2000);
 
     ASSERT_GE(transport_b->get_sent_message_count(), 1);
     ASSERT_GE(transport_c->get_sent_message_count(), 1);
