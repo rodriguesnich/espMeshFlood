@@ -54,6 +54,7 @@ bool MeshProtocol::send_message(const uint8_t* payload, size_t payload_size, uin
 
     // Create message
     MeshMessage message;
+    message.origin_node_id = transport_->get_node_id();
     message.message_id = generate_message_id();
     message.sender_id = transport_->get_node_id();
     message.timestamp = current_time_ms_;

@@ -21,17 +21,17 @@ enum class MessageType : uint32_t {
  * Fields correspond to the Protobuf MeshMessage definition.
  */
 struct MeshMessage {
+        uint32_t origin_node_id;
     uint32_t message_id;
     uint32_t sender_id;
     uint64_t timestamp;
     MessageType type;
     uint32_t ttl;
-    uint32_t relay_count;
     std::vector<uint8_t> payload;
 
     MeshMessage() 
-        : message_id(0), sender_id(0), timestamp(0), type(MessageType::USER_MESSAGE),
-          ttl(5), relay_count(0) {}
+                : origin_node_id(0), message_id(0), sender_id(0), timestamp(0), type(MessageType::USER_MESSAGE),
+                    ttl(5) {}
 };
 
 }  // namespace espMeshFlood

@@ -4,12 +4,15 @@
 #ifdef ESP32
 #include <Arduino.h>
 #include "espMeshFlood/efmp.h"
+#include "espMeshFlood/types.h"
 
-void on_message_received(const uint8_t* data, size_t len, uint32_t from_node) {
+void on_message_received(const espMeshFlood::MeshMessage& message, int32_t rssi) {
     Serial.print("[espMeshFlood] Received message from 0x");
-    Serial.print(from_node, HEX);
+    Serial.print(message.origin_node_id, HEX);
+    Serial.print(" rssi=");
+    Serial.print(rssi);
     Serial.print(" : ");
-    for (size_t i = 0; i < len; ++i) Serial.print((char)data[i]);
+    for (size_t i = 0; i < message.payload.size(); ++i) Serial.print((char)message.payload[i]);
     Serial.println();
 }
 
@@ -39,9 +42,9 @@ void loop() {
 
 // Native build: prints framework info, initializes library with mock transport,
 // sends a single test broadcast and exits.
-void on_message_received(const uint8_t* data, size_t len, uint32_t from_node) {
-    std::cout << "[espMeshFlood] Received from 0x" << std::hex << from_node << std::dec << " : ";
-    std::cout.write(reinterpret_cast<const char*>(data), static_cast<std::streamsize>(len));
+void on_message_received(const espMeshFlood::MeshMessage& message, int32_t rssi) {
+    std::cout << "[espMeshFlood] Received from 0x" << std::hex << message.origin_node_id << std::dec << " rssi=" << rssi << " : ";
+    std::cout.write(reinterpret_cast<const char*>(message.payload.data()), static_cast<std::streamsize>(message.payload.size()));
     std::cout << "\n";
 }
 

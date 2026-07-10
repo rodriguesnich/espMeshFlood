@@ -10,12 +10,12 @@ namespace espMeshFlood {
  * This is a manual implementation that matches the nanopb format.
  * Field encoding (wire type 2 = length-delimited, wire type 0 = varint):
  * 
- * message_id (field 1, wire type 0): varint
- * sender_id (field 2, wire type 0): varint  
- * timestamp (field 3, wire type 0): varint
- * type (field 4, wire type 0): varint
- * ttl (field 5, wire type 0): varint
- * relay_count (field 6, wire type 0): varint
+ * origin_node_id (field 1, wire type 0): varint
+ * message_id (field 2, wire type 0): varint
+ * sender_id (field 3, wire type 0): varint
+ * timestamp (field 4, wire type 0): varint
+ * type (field 5, wire type 0): varint
+ * ttl (field 6, wire type 0): varint
  * payload (field 7, wire type 2): length-delimited
  */
 
@@ -61,29 +61,29 @@ size_t MessageSerializer::serialize(const MeshMessage& message, uint8_t* buffer,
     uint8_t* start = buffer;
     size_t remaining = buffer_size;
 
-    // Field 1: message_id (varint)
+    // Field 1: origin_node_id (varint)
     write_field_key(buffer, remaining, 1, 0);
+    write_varint(buffer, remaining, message.origin_node_id);
+
+    // Field 2: message_id (varint)
+    write_field_key(buffer, remaining, 2, 0);
     write_varint(buffer, remaining, message.message_id);
 
-    // Field 2: sender_id (varint)
-    write_field_key(buffer, remaining, 2, 0);
+    // Field 3: sender_id (varint)
+    write_field_key(buffer, remaining, 3, 0);
     write_varint(buffer, remaining, message.sender_id);
 
-    // Field 3: timestamp (varint)
-    write_field_key(buffer, remaining, 3, 0);
+    // Field 4: timestamp (varint)
+    write_field_key(buffer, remaining, 4, 0);
     write_varint(buffer, remaining, message.timestamp);
 
-    // Field 4: type (varint)
-    write_field_key(buffer, remaining, 4, 0);
+    // Field 5: type (varint)
+    write_field_key(buffer, remaining, 5, 0);
     write_varint(buffer, remaining, static_cast<uint32_t>(message.type));
 
-    // Field 5: ttl (varint)
-    write_field_key(buffer, remaining, 5, 0);
-    write_varint(buffer, remaining, message.ttl);
-
-    // Field 6: relay_count (varint)
+    // Field 6: ttl (varint)
     write_field_key(buffer, remaining, 6, 0);
-    write_varint(buffer, remaining, message.relay_count);
+    write_varint(buffer, remaining, message.ttl);
 
     // Field 7: payload (length-delimited)
     if (!message.payload.empty()) {
@@ -118,40 +118,40 @@ bool MessageSerializer::deserialize(const uint8_t* buffer, size_t buffer_size, M
 
         uint64_t varint_value;
         switch (field_num) {
-            case 1:  // message_id
+            case 1:  // origin_node_id
+                if (wire_type == 0) {
+                    if (!read_varint(buffer, remaining, varint_value)) return false;
+                    message.origin_node_id = static_cast<uint32_t>(varint_value);
+                }
+                break;
+            case 2:  // message_id
                 if (wire_type == 0) {
                     if (!read_varint(buffer, remaining, varint_value)) return false;
                     message.message_id = static_cast<uint32_t>(varint_value);
                 }
                 break;
-            case 2:  // sender_id
+            case 3:  // sender_id
                 if (wire_type == 0) {
                     if (!read_varint(buffer, remaining, varint_value)) return false;
                     message.sender_id = (uint32_t)varint_value;
                 }
                 break;
-            case 3:  // timestamp
+            case 4:  // timestamp
                 if (wire_type == 0) {
                     if (!read_varint(buffer, remaining, varint_value)) return false;
                     message.timestamp = varint_value;
                 }
                 break;
-            case 4:  // type
+            case 5:  // type
                 if (wire_type == 0) {
                     if (!read_varint(buffer, remaining, varint_value)) return false;
                     message.type = static_cast<MessageType>(varint_value);
                 }
                 break;
-            case 5:  // ttl
+            case 6:  // ttl
                 if (wire_type == 0) {
                     if (!read_varint(buffer, remaining, varint_value)) return false;
                     message.ttl = (uint32_t)varint_value;
-                }
-                break;
-            case 6:  // relay_count
-                if (wire_type == 0) {
-                    if (!read_varint(buffer, remaining, varint_value)) return false;
-                    message.relay_count = (uint32_t)varint_value;
                 }
                 break;
             case 7:  // payload (length-delimited)
