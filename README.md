@@ -71,8 +71,7 @@ espMeshFlood/
 │   └── mocks/
 │       └── mock_transport.h
 ├── proto/
-│   ├── mesh_message.proto
-│   └── heartbeat.proto
+│   └── mesh_message.proto
 ├── examples/
 │   └── minimal_mesh_node/
 │       └── main.cpp
