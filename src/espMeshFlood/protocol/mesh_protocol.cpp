@@ -161,6 +161,9 @@ void MeshProtocol::do_retransmit(const MeshMessage& message) {
     size_t serialized_size = MessageSerializer::serialize(retransmit_msg, buffer, sizeof(buffer));
     if (serialized_size > 0) {
         transport_->send_broadcast(buffer, serialized_size);
+        // Deliver retransmitted message to application as well so callers
+        // (e.g., host bridge) can observe all outbound frames via callback.
+        if (app_callback_) app_callback_(retransmit_msg, 0);
     }
 }
 
