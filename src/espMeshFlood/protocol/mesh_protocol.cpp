@@ -43,7 +43,8 @@ void MeshProtocol::deinit() {
     pending_retransmissions_.clear();
 }
 
-bool MeshProtocol::send_message(const uint8_t* payload, size_t payload_size, uint32_t ttl) {
+bool MeshProtocol::send_message(const uint8_t* payload, size_t payload_size, uint32_t ttl,
+                                  MessageType type) {
     if (!transport_ || !transport_->is_initialized()) {
         return false;
     }
@@ -58,7 +59,7 @@ bool MeshProtocol::send_message(const uint8_t* payload, size_t payload_size, uin
     message.message_id = generate_message_id();
     message.sender_id = transport_->get_node_id();
     message.timestamp = current_time_ms_;
-    message.type = MessageType::USER_MESSAGE;
+    message.type = type;
     message.ttl = ttl;
     message.payload.resize(payload_size);
     std::memcpy(message.payload.data(), payload, payload_size);

@@ -60,6 +60,26 @@ TEST_F(MeshProtocolIntegrationTest, DirectDelivery) {
     EXPECT_EQ(received_messages.size(), 1);
 }
 
+TEST_F(MeshProtocolIntegrationTest, ExplicitHeartbeatType) {
+    MeshProtocol protocol(transport, callback);
+    EXPECT_TRUE(protocol.init());
+    protocol.update_time(1000);
+
+    uint8_t payload[] = {0x10, 0x20};
+    EXPECT_TRUE(protocol.send_message(payload, sizeof(payload), 5, MessageType::HEARTBEAT));
+
+    EXPECT_EQ(transport->get_sent_message_count(), 1);
+
+    const auto& sent_msg_data = transport->get_sent_message(0);
+    MeshMessage sent_msg;
+    EXPECT_TRUE(MessageSerializer::deserialize(sent_msg_data.data(), sent_msg_data.size(), sent_msg));
+    EXPECT_EQ(sent_msg.type, MessageType::HEARTBEAT);
+
+    EXPECT_EQ(received_messages.size(), 1);
+    EXPECT_EQ(received_messages[0].msg.type, MessageType::HEARTBEAT);
+    EXPECT_EQ(received_messages[0].rssi, 0);
+}
+
 // CT-02: One Hop Relay
 TEST_F(MeshProtocolIntegrationTest, OneHopRelay) {
     // Node A sends a message

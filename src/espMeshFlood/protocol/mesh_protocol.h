@@ -53,9 +53,11 @@ public:
      * @param payload Payload bytes
      * @param payload_size Size of payload
      * @param ttl Time to live (default: Config::TTL_INITIAL)
+     * @param type Message type (default: USER_MESSAGE)
      * @return true if send initiated successfully
      */
-    bool send_message(const uint8_t* payload, size_t payload_size, uint32_t ttl = Config::TTL_INITIAL);
+    bool send_message(const uint8_t* payload, size_t payload_size, uint32_t ttl = Config::TTL_INITIAL,
+                      MessageType type = MessageType::USER_MESSAGE);
 
     /**
      * @brief Process a received message from the transport layer

@@ -1,6 +1,7 @@
 #ifndef ESPMESHFLOOD_EFMP_H
 #define ESPMESHFLOOD_EFMP_H
 
+#include "espMeshFlood/types.h"
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -47,9 +48,11 @@ public:
      * @param payload Message payload
      * @param payload_size Size of payload in bytes
      * @param ttl Time to live (default: 5)
+     * @param type Message type (default: USER_MESSAGE)
      * @return true if send initiated successfully
      */
-    bool send_message(const uint8_t* payload, size_t payload_size, uint32_t ttl = 5);
+    bool send_message(const uint8_t* payload, size_t payload_size, uint32_t ttl = 5,
+                      MessageType type = MessageType::USER_MESSAGE);
 
     /**
      * @brief Get the local node ID

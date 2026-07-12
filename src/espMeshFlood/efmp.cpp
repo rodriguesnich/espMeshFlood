@@ -58,11 +58,12 @@ void EspMeshFlood::deinit() {
     initialized_ = false;
 }
 
-bool EspMeshFlood::send_message(const uint8_t* payload, size_t payload_size, uint32_t ttl) {
+bool EspMeshFlood::send_message(const uint8_t* payload, size_t payload_size, uint32_t ttl,
+                                 MessageType type) {
     if (!initialized_ || !protocol_) {
         return false;
     }
-    return protocol_->send_message(payload, payload_size, ttl);
+    return protocol_->send_message(payload, payload_size, ttl, type);
 }
 
 uint32_t EspMeshFlood::get_node_id() const {
